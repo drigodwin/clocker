@@ -34,7 +34,6 @@ import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -58,7 +57,6 @@ import org.apache.brooklyn.core.entity.Attributes;
 import org.apache.brooklyn.core.entity.Entities;
 import org.apache.brooklyn.core.entity.EntityAndAttribute;
 import org.apache.brooklyn.core.location.PortRanges;
-import org.apache.brooklyn.core.mgmt.BrooklynTags;
 import org.apache.brooklyn.core.mgmt.BrooklynTaskTags;
 import org.apache.brooklyn.core.sensor.PortAttributeSensorAndConfigKey;
 import org.apache.brooklyn.core.sensor.Sensors;
@@ -80,8 +78,6 @@ import org.apache.brooklyn.util.text.Identifiers;
 import org.apache.brooklyn.util.text.Strings;
 
 import brooklyn.entity.container.docker.DockerContainer;
-import brooklyn.entity.container.docker.DockerHost;
-import brooklyn.entity.container.docker.DockerInfrastructure;
 import brooklyn.location.docker.DockerContainerLocation;
 import brooklyn.networking.sdn.SdnAttributes;
 import brooklyn.networking.subnet.SubnetTier;
@@ -167,7 +163,7 @@ public class DockerUtils {
                         URI.class.isAssignableFrom(sensor.getType())) &&
                     !DockerUtils.BLACKLIST_URL_SENSOR_NAMES.contains(sensor.getName())) {
                 AttributeSensor<String> target = DockerUtils.<String>mappedSensor(sensor);
-                entity.addEnricher(subnetTier.uriTransformingEnricher(
+                entity.enrichers().add(subnetTier.uriTransformingEnricher(
                         EntityAndAttribute.create(entity, sensor), target));
                 Set<Hint<?>> hints = RendererHints.getHintsFor(sensor);
                 for (Hint<?> hint : hints) {
@@ -177,7 +173,7 @@ public class DockerUtils {
             } else if (sensor.getName().matches("docker\\.port\\.[0-9]+") ||
                     PortAttributeSensorAndConfigKey.class.isAssignableFrom(sensor.getClass())) {
                 AttributeSensor<String> target = DockerUtils.mappedPortSensor(sensor);
-                entity.addEnricher(subnetTier.hostAndPortTransformingEnricher(
+                entity.enrichers().add(subnetTier.hostAndPortTransformingEnricher(
                         EntityAndAttribute.create(entity, sensor), target));
                 LOG.debug("Mapped port sensor: origin={}, mapped={}", sensor.getName(), target.getName());
             }
@@ -391,7 +387,6 @@ public class DockerUtils {
         public void reloaded() {
             Location resolved = context.getLocationRegistry().resolve(definition);
             context.getLocationRegistry().updateDefinedLocation(definition);
-            context.getLocationManager().manage(resolved);
         }
     }
 
